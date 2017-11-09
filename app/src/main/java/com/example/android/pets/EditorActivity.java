@@ -15,9 +15,12 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,8 +29,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetsContract;
+import com.example.android.pets.data.PetsDBHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -100,9 +105,34 @@ public class EditorActivity extends AppCompatActivity {
             // Because AdapterView is an abstract class, onNothingSelected must be defined
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                mGender = 0; // Unknown
+                mGender = PetsContract.PetEntry.GENDER_UNKNOWN; // Unknown
             }
         });
+    }
+
+    private void insertPet(){
+        String nameEditable = mNameEditText.getText().toString().trim();
+        String breedEditable = mBreedEditText.getText().toString().trim();
+        String weightEditable = mWeightEditText.getText().toString().trim();
+
+        // Building the insert query
+        ContentValues values = new ContentValues();
+        values.put(PetsContract.PetEntry.COLUMN_NAME, nameEditable);
+        values.put(PetsContract.PetEntry.COLUMN_BREED, breedEditable);
+        values.put(PetsContract.PetEntry.COLUMN_GENDER, mGender);
+        values.put(PetsContract.PetEntry.COLUMN_WEIGHT, Integer.parseInt(weightEditable));
+
+        // Get writable database
+        PetsDBHelper petsDBHelper = new PetsDBHelper(this);
+        SQLiteDatabase db = petsDBHelper.getWritableDatabase();
+        long rowId = db.insert(PetsContract.PetEntry.TABLE_NAME, null, values);
+        if (rowId != -1){
+            Toast.makeText(getApplicationContext(), "Pet Successfully added to the database",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Error updating the database",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -119,7 +149,10 @@ public class EditorActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Do nothing for now
+                // Save the pet into the database
+                insertPet();
+                // Exit this activity
+                finish();
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:

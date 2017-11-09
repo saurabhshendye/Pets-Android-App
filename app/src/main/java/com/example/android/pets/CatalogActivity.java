@@ -90,6 +90,11 @@ public class CatalogActivity extends AppCompatActivity {
         db.insert(PetsContract.PetEntry.TABLE_NAME, null, values);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        displayDatabaseInfo();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
