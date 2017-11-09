@@ -9,7 +9,7 @@ public final class PetsContract {
 
     }
 
-    private final class pets implements BaseColumns {
+    public final class PetEntry implements BaseColumns {
         /**
          * Defining Constants for the pets database
          */
