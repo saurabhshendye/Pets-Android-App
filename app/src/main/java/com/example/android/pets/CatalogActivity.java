@@ -59,16 +59,46 @@ public class CatalogActivity extends AppCompatActivity {
         PetsDBHelper mDbHelper = new PetsDBHelper(this);
 
         // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+//        SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        // Perform this raw SQL query "SELECT * FROM pets"
+        // Perform this SQL query "SELECT * FROM pets"
         // to get a Cursor that contains all rows from the pets table.
-        Cursor cursor = db.rawQuery("SELECT * FROM " + PetsContract.PetEntry.TABLE_NAME, null);
+        String [] SelectionColumns = new String[]
+                {PetsContract.PetEntry.COLUMN_ID,
+                        PetsContract.PetEntry.COLUMN_NAME,
+                        PetsContract.PetEntry.COLUMN_BREED,
+                        PetsContract.PetEntry.COLUMN_WEIGHT,
+                        PetsContract.PetEntry.COLUMN_GENDER};
+
+
+        Cursor cursor= getContentResolver().query(PetsContract.PetEntry.CONTENT_URI,
+                SelectionColumns, null,null,null);
+
+        int idColumnIndex = cursor.getColumnIndex(PetsContract.PetEntry.COLUMN_ID);
+        int nameColumnIndex = cursor.getColumnIndex(PetsContract.PetEntry.COLUMN_NAME);
+        int breedColumnIndex = cursor.getColumnIndex(PetsContract.PetEntry.COLUMN_BREED);
+        int genderColumnIndex = cursor.getColumnIndex(PetsContract.PetEntry.COLUMN_GENDER);
+        int weightColumnIndex = cursor.getColumnIndex(PetsContract.PetEntry.COLUMN_WEIGHT);
+
         try {
             // Display the number of rows in the Cursor (which reflects the number of rows in the
             // pets table in the database).
             TextView displayView = (TextView) findViewById(R.id.text_view_pet);
             displayView.setText("Number of rows in pets database table: " + cursor.getCount());
+
+            while(cursor.moveToNext()){
+
+                int currentID = cursor.getInt(idColumnIndex);
+                String currentName = cursor.getString(nameColumnIndex);
+                String currentBreed = cursor.getString(breedColumnIndex);
+                int currentGender = cursor.getInt(genderColumnIndex);
+                int currentWeight = cursor.getInt(weightColumnIndex);
+
+                displayView.append(("\n" + currentID + " - " +
+                        currentName+ " - " + currentBreed + " - "
+                        + currentGender + " - " + currentWeight ));
+
+            }
         } finally {
             // Always close the cursor when you're done reading from it. This releases all its
             // resources and makes it invalid.
@@ -87,7 +117,7 @@ public class CatalogActivity extends AppCompatActivity {
 
         PetsDBHelper petsDBHelper = new PetsDBHelper(this);
         SQLiteDatabase db = petsDBHelper.getWritableDatabase();
-        db.insert(PetsContract.PetEntry.TABLE_NAME, null, values);
+        getContentResolver().insert(PetsContract.PetEntry.CONTENT_URI, values);
     }
 
     @Override

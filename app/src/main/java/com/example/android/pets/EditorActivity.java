@@ -15,8 +15,10 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +33,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.example.android.pets.data.PetProvider;
 import com.example.android.pets.data.PetsContract;
 import com.example.android.pets.data.PetsDBHelper;
 
@@ -124,9 +127,11 @@ public class EditorActivity extends AppCompatActivity {
 
         // Get writable database
         PetsDBHelper petsDBHelper = new PetsDBHelper(this);
-        SQLiteDatabase db = petsDBHelper.getWritableDatabase();
-        long rowId = db.insert(PetsContract.PetEntry.TABLE_NAME, null, values);
-        if (rowId != -1){
+
+
+        Uri rowUri = getContentResolver().insert(PetsContract.PetEntry.CONTENT_URI,values);
+
+        if (rowUri!=null){
             Toast.makeText(getApplicationContext(), "Pet Successfully added to the database",
                     Toast.LENGTH_SHORT).show();
         } else {
