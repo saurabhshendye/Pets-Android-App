@@ -78,6 +78,8 @@ public class PetProvider extends ContentProvider {
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
 
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return cursor;
     }
 
@@ -108,9 +110,7 @@ public class PetProvider extends ContentProvider {
         }
 
         Integer gender = contentValues.getAsInteger(PetsContract.PetEntry.COLUMN_GENDER);
-        if (gender!=null || gender==0 || gender==1 || gender==2) {
-
-        }else {
+        if (gender==null || !PetsContract.PetEntry.isValidGender(gender) ) {
             throw new IllegalArgumentException("Invalid Gender");
         }
 
@@ -127,6 +127,7 @@ public class PetProvider extends ContentProvider {
             return null;
         }
 
+        getContext().getContentResolver().notifyChange(uri,null);
         return ContentUris.withAppendedId(uri, id);
     }
 
@@ -152,7 +153,7 @@ public class PetProvider extends ContentProvider {
     }
 
     private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-
+        int rowsUpdated;
 
         if (values.containsKey(PetsContract.PetEntry.COLUMN_NAME)) {
             String name = values.getAsString(PetsContract.PetEntry.COLUMN_NAME);
@@ -163,7 +164,7 @@ public class PetProvider extends ContentProvider {
 
         if (values.containsKey(PetsContract.PetEntry.COLUMN_GENDER)) {
             Integer gender = values.getAsInteger(PetsContract.PetEntry.COLUMN_GENDER);
-            if (gender == null || gender==0 || gender==1 || gender==2) {
+            if (gender == null || !PetsContract.PetEntry.isValidGender(gender)) {
                 throw new IllegalArgumentException("Pet requires valid gender");
             }
         }
@@ -177,7 +178,12 @@ public class PetProvider extends ContentProvider {
         }
 
         SQLiteDatabase db = petsDBHelper.getWritableDatabase();
-        return db.update(PetsContract.PetEntry.TABLE_NAME, values, selection, selectionArgs);
+
+        rowsUpdated = db.update(PetsContract.PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        if (rowsUpdated !=0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        return rowsUpdated;
     }
 
     /**
@@ -185,6 +191,7 @@ public class PetProvider extends ContentProvider {
      */
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
+        int rowsDeleted;
         // Get writeable database
         SQLiteDatabase database = petsDBHelper.getWritableDatabase();
 
@@ -192,12 +199,20 @@ public class PetProvider extends ContentProvider {
         switch (match) {
             case PETS:
                 // Delete all rows that match the selection and selection args
-                return database.delete(PetsContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = database.delete(PetsContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                if (rowsDeleted!=0){
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
+                return rowsDeleted;
             case PET_ID:
                 // Delete a single row given by the ID in the URI
                 selection = PetsContract.PetEntry._ID + "=?";
                 selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
-                return database.delete(PetsContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = database.delete(PetsContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                if (rowsDeleted!=0){
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
+                return rowsDeleted;
             default:
                 throw new IllegalArgumentException("Deletion is not supported for " + uri);
         }
